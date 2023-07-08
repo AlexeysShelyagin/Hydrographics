@@ -1,0 +1,9 @@
+
+Paralution:
+https://www.google.com/search?q=paralution&oq=paralution&aqs=chrome..69i57j46i175i199i512j35i39j0i30j0i5i10i15i30j69i60l2.3917j0j9&sourceid=chrome&ie=UTF-8
+
+Viscous sheet model:
+https://www.google.com/search?q=Discrete+viscous+sheets.+ACM+Trans.+Graph&oq=Discrete+viscous+sheets.+ACM+Trans.+Graph&aqs=chrome..69i57.881j0j7&sourceid=chrome&ie=UTF-8
+
+A discrete model for inelastic deformation of thin shells:
+https://cims.nyu.edu/gcl/papers/secord2004sds.pdf

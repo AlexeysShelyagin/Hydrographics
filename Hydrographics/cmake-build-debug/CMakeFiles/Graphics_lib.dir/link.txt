@@ -1,0 +1,2 @@
+C:\PROGRA~1\CODEBL~1\MinGW\bin\ar.exe qc libGraphics_lib.a CMakeFiles/Graphics_lib.dir/include/graphics/graphics.cpp.obj CMakeFiles/Graphics_lib.dir/include/graphics/UI.cpp.obj CMakeFiles/Graphics_lib.dir/include/graphics/vectors.cpp.obj
+C:\PROGRA~1\CODEBL~1\MinGW\bin\ranlib.exe libGraphics_lib.a

@@ -1,5 +1,5 @@
-./Tests/Other
-./Info
-./Hydrographics_addon
-./Hydrographics/.idea
-./Hydrographics/cmake-build-debug
+Tests/Other
+Info
+Hydrographics_addon
+Hydrographics/.idea
+Hydrographics/cmake-build-debug

@@ -1,3 +1,0 @@
-"C:\Program Files\JetBrains\CLion 2021.2.3\bin\cmake\win\bin\cmake.exe" -E rm -f CMakeFiles\Hydrographics.dir/objects.a
-C:\PROGRA~1\CODEBL~1\MinGW\bin\ar.exe cr CMakeFiles\Hydrographics.dir/objects.a @CMakeFiles\Hydrographics.dir\objects1.rsp
-C:\PROGRA~1\CODEBL~1\MinGW\bin\G__~1.EXE -g -Wl,--whole-archive CMakeFiles\Hydrographics.dir/objects.a -Wl,--no-whole-archive -o Hydrographics.exe -Wl,--out-implib,libHydrographics.dll.a -Wl,--major-image-version,0,--minor-image-version,0 @CMakeFiles\Hydrographics.dir\linklibs.rsp

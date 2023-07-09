@@ -3,8 +3,6 @@ ADD_LIBRARY(Graphics_lib
         ${CMAKE_CURRENT_LIST_DIR}/graphics.h
         ${CMAKE_CURRENT_LIST_DIR}/UI.cpp
         ${CMAKE_CURRENT_LIST_DIR}/UI.h
-        ${CMAKE_CURRENT_LIST_DIR}/vectors.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/vectors.h
         )
 
 set(SFML_STATIC_LIBRARIES TRUE)

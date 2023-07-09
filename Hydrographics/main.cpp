@@ -17,9 +17,9 @@ int main() {
         Mesh slice = slice_mesh(cube, h);
 
         Mesh plane;
-        plane.add_vertex(vec3(-2, 1, h));
-        plane.add_vertex(vec3(2, 1, h));
-        plane.add_vertex(vec3(0, -2, h));
+        plane.add_vertex(dvec3(-2, 1, h));
+        plane.add_vertex(dvec3(2, 1, h));
+        plane.add_vertex(dvec3(0, -2, h));
         plane.add_polygon(0, 1, 2, vec3(0, 0, 1));
 
         render_clear();

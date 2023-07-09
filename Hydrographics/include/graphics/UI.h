@@ -3,17 +3,19 @@
 
 #include <string>
 
-#include "vectors.h"
+#include "glm/glm.hpp"
+
+using namespace glm;
 
 class base_view{
 public:
     int type;
     double scale;
-    vec2 pos;
+    dvec2 pos;
 
-    base_view(int _type, double _scale = 1, vec2 _pos = vec2());
+    base_view(int _type, double _scale = 1, dvec2 _pos = dvec2());
 
-    vec2 coords(vec3 obj_pos);
+    dvec2 coords(dvec3 obj_pos);
 };
 
 class window_surface{
@@ -24,7 +26,7 @@ public:
     window_surface(std::string _name);
     window_surface(int _width = 0, int _height = 0, int _x = 0, int _y = 0);
 
-    bool inside(vec2 pos);
-    void change_size(vec2 size, vec2 pos = vec2());
+    bool inside(dvec2 pos);
+    void change_size(dvec2 size, dvec2 pos = dvec2());
 };
 #endif //N_BODY_PROBLEM_UI_H

@@ -4,6 +4,10 @@
 #include "UI.h"
 #include <string>
 
+#include "glm/glm.hpp"
+
+using namespace glm;
+
 void sf_init_window(int w, int h, std::string title, double scale);
 
 bool sf_window_opened();
@@ -12,11 +16,11 @@ void sf_close_window();
 
 std::string sf_window_event();
 
-vec2 pos_on_view(std::string view_name, vec3 coord);
+dvec2 pos_on_view(std::string view_name, dvec3 coord);
 
-void draw_circle(std::string surf_name, vec2 pos = vec2());
+void draw_circle(std::string surf_name, dvec2 pos = dvec2());
 void draw_text(std::string surf_name, std::string txt, int x = 0, int y = 0);
-void draw_line(std::string surf_name, vec2 st = vec2(), vec2 en = vec2(), vec3 color = vec3(255, 255, 255));
+void draw_line(std::string surf_name, dvec2 st = dvec2(), dvec2 en = dvec2(), dvec3 color = dvec3(255, 255, 255));
 void sf_render_window();
 void sf_clear_window();
 

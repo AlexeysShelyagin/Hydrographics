@@ -24,10 +24,10 @@ std::map < std::string, window_surface* > surfaces;
 
 RenderWindow* window;
 
-vec2 pressed_pos;
+dvec2 pressed_pos;
 int mouse_window;
 
-vec2 window_size;
+dvec2 window_size;
 
 bool window_opened = false;
 
@@ -100,7 +100,7 @@ void sf_init_window(int w, int h, std::string title, double scale){
     surfaces["front"] = &surf_front;
     surfaces["side"] = &surf_side;
 
-    window_size = vec2(w, h);
+    window_size = dvec2(w, h);
 
     top.scale = scale;
     front.scale = scale;
@@ -122,7 +122,7 @@ void sf_close_window(){
 
 std::string sf_window_event(){
     std::string responce = "None";
-    vec2 mouse_pos(Mouse::getPosition(*window).x, Mouse::getPosition(*window).y);
+    dvec2 mouse_pos(Mouse::getPosition(*window).x, Mouse::getPosition(*window).y);
 
     Event event;
     while (window -> pollEvent(event)){
@@ -150,7 +150,7 @@ std::string sf_window_event(){
             mouse_window = -1;
         }
         if (Mouse::isButtonPressed(sf::Mouse::Left)){
-            vec2 mouse_delta = mouse_pos - pressed_pos;
+            dvec2 mouse_delta = mouse_pos - pressed_pos;
             pressed_pos = mouse_pos;
 
             if(mouse_window == 1) top.pos += mouse_delta;
@@ -162,13 +162,13 @@ std::string sf_window_event(){
     return responce;
 }
 
-vec2 pos_on_view(std::string view_name, vec3 coord){
+dvec2 pos_on_view(std::string view_name, dvec3 coord){
     if(view_name == "top") return top.coords(coord);
     if(view_name == "front") return front.coords(coord);
     if(view_name == "side") return side.coords(coord);
 }
 
-void draw_circle(std::string surf_name, vec2 pos){
+void draw_circle(std::string surf_name, dvec2 pos){
     window_surface* surface = surfaces[surf_name];
 
     CircleShape circle(1);
@@ -198,7 +198,7 @@ void draw_text(std::string surf_name, std::string txt, int x, int y){
     window -> draw(text);
 }
 
-void draw_line(std::string surf_name, vec2 st, vec2 en, vec3 color){
+void draw_line(std::string surf_name, dvec2 st, dvec2 en, dvec3 color){
     window_surface* surface = surfaces[surf_name];
 
     int half_w = surface -> w / 2, half_h = surface -> h / 2;

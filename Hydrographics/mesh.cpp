@@ -1,6 +1,6 @@
 #include "mesh.h"
 
-Polygon::Polygon(int vert0, int vert1, int vert2, vec3 normal) {
+Polygon::Polygon(int vert0, int vert1, int vert2, dvec3 normal) {
     v0 = vert0;
     v1 = vert1;
     v2 = vert2;
@@ -8,12 +8,12 @@ Polygon::Polygon(int vert0, int vert1, int vert2, vec3 normal) {
     n = normal;
 }
 
-uint64_t Mesh::add_vertex(vec3 vert) {
+uint64_t Mesh::add_vertex(dvec3 vert) {
     vertices.push_back(vert);
     return vertices.size() - 1;
 }
 
-void Mesh::add_polygon(int v0, int v1, int v2, vec3 n) {
+void Mesh::add_polygon(int v0, int v1, int v2, dvec3 n) {
     polygons.push_back(Polygon(v0, v1, v2, n));
 }
 

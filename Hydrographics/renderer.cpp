@@ -2,6 +2,9 @@
 
 #include "include/graphics/graphics.h"
 #include <iostream>
+#include "include/glm/vec3.hpp"
+
+using namespace glm;
 
 void init_render_window(std::string title, double scale){
     sf_init_window(1920, 1080, title, scale);

@@ -4,15 +4,17 @@
 #include <algorithm>
 #include <iostream>
 
-Slice_polygon::Slice_polygon(int polygon_i, int edge0, int edge1, vec3 n_) {
+using namespace glm;
+
+Slice_polygon::Slice_polygon(int polygon_i, int edge0, int edge1, dvec3 n_) {
     poly_i = polygon_i;
     e0 = edge0;
     e1 = edge1;
     n = n_;
 }
 
-std::vector < vec3 > vertices_by_edge(Mesh &mesh, int poly_i, int edge_i){
-    std::vector < vec3 > v(2);
+std::vector < dvec3 > vertices_by_edge(Mesh &mesh, int poly_i, int edge_i){
+    std::vector < dvec3 > v(2);
     Polygon poly = mesh.polygons[poly_i];
 
     switch (edge_i) {
@@ -34,19 +36,19 @@ std::vector < vec3 > vertices_by_edge(Mesh &mesh, int poly_i, int edge_i){
     return v;
 }
 
-vec3 point_on_height(Mesh &mesh, int poly_i, int edge_i, double h){
-    std::vector < vec3 > edge = vertices_by_edge(mesh, poly_i, edge_i);
-    vec3 v0 = edge[0], v1 = edge[1];
+dvec3 point_on_height(Mesh &mesh, int poly_i, int edge_i, double h){
+    std::vector < dvec3 > edge = vertices_by_edge(mesh, poly_i, edge_i);
+    dvec3 v0 = edge[0], v1 = edge[1];
     if(v0.z > v1.z) std::swap(v0, v1);
 
-    vec3 v01 = v1 - v0;
+    dvec3 v01 = v1 - v0;
     double k = (h - v0.z) / v01.z;
-    vec3 p = v0 + v01 * k;
+    dvec3 p = v0 + v01 * k;
 
     return p;
 }
 
-Mesh slice_mesh(Mesh &mesh, double h, vec2 border_st, vec2 border_en){
+Mesh slice_mesh(Mesh &mesh, double h, dvec2 border_st, dvec2 border_en){
     std::vector < int > polygons_to_cut;
     std::vector < Slice_polygon > intersections;
 
@@ -72,8 +74,8 @@ Mesh slice_mesh(Mesh &mesh, double h, vec2 border_st, vec2 border_en){
 
     Mesh slice;
     for(Slice_polygon intersect : intersections){
-        vec3 p0 = point_on_height(mesh, intersect.poly_i, intersect.e0, h);
-        vec3 p1 = point_on_height(mesh, intersect.poly_i, intersect.e1, h);
+        dvec3 p0 = point_on_height(mesh, intersect.poly_i, intersect.e0, h);
+        dvec3 p1 = point_on_height(mesh, intersect.poly_i, intersect.e1, h);
 
         slice.add_vertex(p0);
         slice.add_vertex(p1);

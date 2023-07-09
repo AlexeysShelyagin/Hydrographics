@@ -1,10 +1,12 @@
 #include "model_loader.h"
-#include "vectors.h"
 
 #define TINYOBJLOADER_IMPLEMENTATION
 
 #include <iostream>
 #include "tiny_obj_loader.h"
+#include "include/glm/vec3.hpp"
+
+using namespace glm;
 
 Mesh load_model(std::string filepath, std::string filename){
     std::cout << "Loading " << filename << "... ";
@@ -29,7 +31,7 @@ Mesh load_model(std::string filepath, std::string filename){
     Mesh model;
 
     for(int i = 0; i < attrib.vertices.size(); i += 3){
-        model.add_vertex(vec3(
+        model.add_vertex(dvec3(
             attrib.vertices[i + 0],
             attrib.vertices[i + 1],
             attrib.vertices[i + 2]
@@ -47,7 +49,7 @@ Mesh load_model(std::string filepath, std::string filename){
 
         for (uint64_t vertex_i = 0; vertex_i < shape.mesh.indices.size(); vertex_i += 3) {
             uint64_t normal_i = shape.mesh.indices[vertex_i].normal_index;
-            vec3 n = vec3(
+            dvec3 n = dvec3(
                 attrib.normals[normal_i + 0],
                 attrib.normals[normal_i + 1],
                 attrib.normals[normal_i + 2]

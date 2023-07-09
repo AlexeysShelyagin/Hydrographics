@@ -5,8 +5,10 @@
 #include <iostream>
 
 #define DOUBLE_VERTEX_PRECISION 1e-9
+#define MAX_JOIN_ITERATIONS 100
 
 using namespace glm;
+using namespace Slice;
 
 Slice_face::Slice_face(int polygon_i, int edge0, int edge1, dvec3 n_) {
     poly_i = polygon_i;
@@ -25,19 +27,22 @@ bool vec3_unique_comp(Slice_unique_vertex a, Slice_unique_vertex b){
     return a.vert.x < b.vert.x;
 }
 
-dvec2 edges_intersect(dvec2 e0p0, dvec2 e0p1, dvec2 e1p0, dvec2 e1p1){
+dvec2 edges_intersect(dvec3 e0p0, dvec3 e0p1, dvec3 e1p0, dvec3 e1p1){
     dvec2 a = e0p1 - e0p0;
-    dvec2 b = e1p1 - e1p0;
+    dvec2 b = e1p0 - e1p1;
     dvec2 r_ab = e1p0 - e0p0;
 
     double D = determinant(mat2x2(a.x, a.y, b.x, b.y));
     double D_t = determinant(mat2x2(a.x, a.y, r_ab.x, r_ab.y));
     double D_k = determinant(mat2x2(r_ab.x, r_ab.y, b.x, b.y));
 
-    double t = D_t / D;
-    double k = D_k / D;
+    if (D == 0) return dvec2(-1, -1);
+    return dvec2 (D_t / D, D_k / D);
+}
 
-    return dvec2(t, k);
+bool is_intersect(dvec2 res, bool allow_corners = true){
+    if(allow_corners) return (0 <= res.x && res.x <= 1 && 0 <= res.y && res.y <= 1);
+    return (0 < res.x && res.x < 1 && 0 < res.y && res.y < 1);
 }
 
 std::vector < dvec3 > vertices_by_edge(Mesh &mesh, int poly_i, int edge_i){
@@ -50,16 +55,60 @@ std::vector < dvec3 > vertices_by_edge(Mesh &mesh, int poly_i, int edge_i){
     return v;
 }
 
-dvec3 point_on_height(Mesh &mesh, int poly_i, int edge_i, double h){
-    std::vector < dvec3 > edge = vertices_by_edge(mesh, poly_i, edge_i);
+dvec3 point_on_height(Mesh &mesh, int poly_i, int edge_i, double h) {
+    std::vector<dvec3> edge = vertices_by_edge(mesh, poly_i, edge_i);
     dvec3 v0 = edge[0], v1 = edge[1];
-    if(v0.z > v1.z) std::swap(v0, v1);
+    if (v0.z > v1.z) std::swap(v0, v1);
 
     dvec3 v01 = v1 - v0;
     double k = (h - v0.z) / v01.z;
     dvec3 p = v0 + v01 * k;
 
     return p;
+}
+
+int edge_intersect_face(Mesh &slice, dvec3 &st, dvec3 &en, Face &face){
+    std::vector < dvec2 > face_res;
+    std::vector < int > face_res_i;
+    for(int i = 0; i < face.verts.size(); i++){
+        dvec2 res = edges_intersect(st, en, slice.vertices[face.verts[i]], slice.vertices[face.verts[(i + 1) % face.verts.size()]]);
+        if(is_intersect(res, false)){
+            face_res.push_back(res);
+            face_res_i.push_back(i);
+        }
+    }
+
+    double max_t = 0, max_t_i = -1;
+    for(int i = 0; i < face_res.size(); i++){
+        if(face_res[i].x > max_t){
+            max_t = face_res[i].x;
+            max_t_i = face_res_i[i];
+        }
+    }
+
+    return max_t_i;
+}
+
+bool join_outlines(Mesh &slice, int face1_i, int face2_i){
+    Face face1 = slice.faces[face1_i];
+    Face face2 = slice.faces[face2_i];
+
+    int i1 = 0, i2 = 0, i1_new, i2_new;
+    for (int i = 0; i < MAX_JOIN_ITERATIONS; i++) {
+        dvec3 st = slice.vertices[face1.verts[i1]];
+        dvec3 en = slice.vertices[face2.verts[i2]];
+        if (i1 != -1)
+            i1_new = edge_intersect_face(slice, st, en, face1);
+        if (i2 != -1)
+            i2_new = edge_intersect_face(slice, en, st, face2);
+
+        if(i1_new == -1 && i2_new == -1) break;
+        i1 = i1_new;
+        i2 = i2_new;
+    }
+
+    slice.add_face(face1.verts[i1], face1.verts[i1], face2.verts[i2]);
+    return false;
 }
 
 Mesh slice_mesh(Mesh &mesh, double h, dvec2 border_st, dvec2 border_en){
@@ -116,8 +165,6 @@ Mesh slice_mesh(Mesh &mesh, double h, dvec2 border_st, dvec2 border_en){
     bool merged = false;
     std::vector < std::vector < int > > edge_groups;
     for(int i = 0; i < all_verts.size(); i++){
-        //std::cout << all_verts[i].vert.x << ' ' <<  all_verts[i].vert.y << ' ' << all_verts[i].vert.z << ":   " << all_verts[i].edge << '\n';
-
         if (!merged){
             slice.add_vertex(all_verts[i].vert);
             edge_groups.push_back(std::vector < int > (1));
@@ -125,14 +172,12 @@ Mesh slice_mesh(Mesh &mesh, double h, dvec2 border_st, dvec2 border_en){
         }
         merged = false;
 
-
         if(i >= all_verts.size() - 1) continue;
         dvec3 dv = all_verts[i + 1].vert - all_verts[i].vert;
         if(abs(dv.x) < DOUBLE_VERTEX_PRECISION && abs(dv.y) < DOUBLE_VERTEX_PRECISION){
             merged = true;
             edge_groups[edge_groups.size() - 1].push_back(all_verts[i + 1].edge);
         }
-
     }
 
     std::vector < std::vector < int > > edges(intersections.size(), std::vector < int > ());
@@ -175,6 +220,10 @@ Mesh slice_mesh(Mesh &mesh, double h, dvec2 border_st, dvec2 border_en){
     std::vector < int > plane = {last_v, last_v - 1, last_v - 2, last_v - 3};
     slice.add_face(plane, dvec3(0, 0, 1));
 
+    int n = slice.faces.size();
+    for(int i = 0; i < n - 1; i++){
+        join_outlines(slice, i, i + 1);
+    }
 /*
     std::cout << "\n-------------------\n";
 

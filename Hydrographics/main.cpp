@@ -5,17 +5,14 @@
 #include "slicer.h"
 
 int main() {
-    Mesh cube = load_model("../../Tests/", "Perimeter_test.obj");
+    Mesh cube = load_model("../../Tests/", "Bear.obj");
     //std::cout << cube.faces.size();
 
     init_render_window("Hydrographics", 200);
-    for(double h = 0.1; h < 1; h += 0.00005) {
+    for(double h = 0.75; h < 1; h += 0.00001) {
         //h = 0.1;
-        //std::cout << h << '\n';
-        //std::vector < int > cut = slice_mesh(cube, h);
-        //cube.deselect_all_polygons();
-        //cube.select_polygons(cut);
-        Mesh slice = slice_mesh(cube, h, dvec2(-1.3, -1), dvec2(1.3, 1.3));
+        //Mesh slice = slice_mesh(cube, h, dvec2(-1.3, -1), dvec2(1.3, 1.3));
+        Mesh slice = slice_mesh(cube, h, dvec2(-2, -3), dvec2(2, 3));
 
         Mesh plane;
         plane.add_vertex(dvec3(-2, 1, h));

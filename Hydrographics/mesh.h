@@ -28,8 +28,8 @@ public:
     Mesh() {};
 
     uint64_t add_vertex(dvec3 vert);
-    void add_face(int v0, int v1, int v2, dvec3 n);
-    void add_face(std::vector < int > vertices, dvec3 n);
+    void add_face(int v0, int v1, int v2, dvec3 n = dvec3(0, 0, 1));
+    void add_face(std::vector < int > vertices, dvec3 n = dvec3(0, 0, 1));
 
     std::vector < dvec3 > face_vertices(int face_i);
 

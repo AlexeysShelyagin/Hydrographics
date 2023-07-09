@@ -10,6 +10,6 @@ bool window_not_closed();
 void render_show();
 void render_clear();
 
-void render_mesh(Mesh &mesh, vec3 default_color = vec3(255, 255, 255));
+void render_mesh(Mesh &mesh, dvec3 default_color = dvec3(255, 255, 255));
 
 #endif //HYDROGRAPHICS_RENDERER_H

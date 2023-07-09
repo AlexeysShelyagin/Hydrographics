@@ -43,7 +43,9 @@ Mesh load_model(std::string filepath, std::string filename){
         // check if mesh not triangulated
         for(const auto& num : shape.mesh.num_face_vertices){
             if(num != 3){
-                throw std::runtime_error("mesh not triangulated");
+                throw std::runtime_error("mesh is not triangulated");
+
+                // TODO: add triangulation
             }
         }
 
@@ -54,11 +56,11 @@ Mesh load_model(std::string filepath, std::string filename){
                 attrib.normals[normal_i + 1],
                 attrib.normals[normal_i + 2]
             );
-            model.add_polygon(
-                shape.mesh.indices[vertex_i + 0].vertex_index,
-                shape.mesh.indices[vertex_i + 1].vertex_index,
-                shape.mesh.indices[vertex_i + 2].vertex_index,
-                n
+            model.add_face(
+                    shape.mesh.indices[vertex_i + 0].vertex_index,
+                    shape.mesh.indices[vertex_i + 1].vertex_index,
+                    shape.mesh.indices[vertex_i + 2].vertex_index,
+                    n
             );
         }
     }

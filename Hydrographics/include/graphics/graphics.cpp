@@ -138,6 +138,12 @@ std::string sf_window_event(){
             responce = "wheel_scrolled";
         }
 
+        if(event.type == Event::KeyPressed){
+            if(event.key.code == Keyboard::Space){
+                responce = "space";
+            }
+        }
+
         if (event.type == Event::MouseButtonPressed){
             pressed_pos = mouse_pos;
 

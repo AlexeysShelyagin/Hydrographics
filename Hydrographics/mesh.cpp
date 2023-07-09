@@ -1,9 +1,16 @@
 #include "mesh.h"
 
-Polygon::Polygon(int vert0, int vert1, int vert2, dvec3 normal) {
-    v0 = vert0;
-    v1 = vert1;
-    v2 = vert2;
+Face::Face(int v0, int v1, int v2, dvec3 normal) {
+    verts.resize(3);
+    verts[0] = v0;
+    verts[1] = v1;
+    verts[2] = v2;
+
+    n = normal;
+}
+
+Face::Face(std::vector < int > vertices, dvec3 normal) {
+    verts = vertices;
 
     n = normal;
 }
@@ -13,8 +20,22 @@ uint64_t Mesh::add_vertex(dvec3 vert) {
     return vertices.size() - 1;
 }
 
-void Mesh::add_polygon(int v0, int v1, int v2, dvec3 n) {
-    polygons.push_back(Polygon(v0, v1, v2, n));
+void Mesh::add_face(int v0, int v1, int v2, dvec3 n) {
+    faces.push_back(Face(v0, v1, v2, n));
+}
+
+void Mesh::add_face(std::vector < int > vertices, dvec3 n) {
+    faces.push_back(Face(vertices, n));
+}
+
+std::vector < dvec3 > Mesh::face_vertices(int face_i) {
+    int v_n = faces[face_i].verts.size();
+    std::vector < dvec3 > verts(v_n);
+    for(int i = 0; i < v_n; i++){
+        verts[i] = vertices[faces[face_i].verts[i]];
+    }
+
+    return verts;
 }
 
 void Mesh::select_polygons(std::vector < int > target) {

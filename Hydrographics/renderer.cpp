@@ -12,7 +12,9 @@ void init_render_window(std::string title, double scale){
 
 bool window_not_closed(){
     std::string event = sf_window_event();
-    //if(event != "None") sf_render_window();
+    if(event == "space"){
+        while(sf_window_event() != "space") {}
+    }
     return sf_window_opened();
 }
 
@@ -24,27 +26,28 @@ void render_clear(){
     sf_clear_window();
 }
 
-void draw_polygon(vec3 poly[3], vec3 color = vec3(255, 255, 255)){
-    for(int j = 0; j < 3; j++){
+void draw_polygon(std::vector < dvec3 > poly, dvec3 color = dvec3(255, 255, 255)){
+    int v_n = poly.size();
+    for(int j = 0; j < v_n; j++){
         draw_line("top",
                   pos_on_view("top", poly[j]),
-                  pos_on_view("top", poly[(j + 1) % 3]),
+                  pos_on_view("top", poly[(j + 1) % v_n]),
                   color
         );
         draw_line("front",
                   pos_on_view("front", poly[j]),
-                  pos_on_view("front", poly[(j + 1) % 3]),
+                  pos_on_view("front", poly[(j + 1) % v_n]),
                   color
         );
         draw_line("side",
                   pos_on_view("side", poly[j]),
-                  pos_on_view("side", poly[(j + 1) % 3]),
+                  pos_on_view("side", poly[(j + 1) % v_n]),
                   color
         );
     }
 }
 
-void render_mesh(Mesh &mesh, vec3 default_color){
+void render_mesh(Mesh &mesh, dvec3 default_color){
     /*
     for(int i = 0; i < mesh.vertices.size(); i++) {
         draw_circle("top", pos_on_view("top", mesh.vertices[i]));
@@ -53,22 +56,12 @@ void render_mesh(Mesh &mesh, vec3 default_color){
     }
      */
 
-    for(int i = 0; i < mesh.polygons.size(); i++){
-        vec3 poly[3] = {
-                mesh.vertices[mesh.polygons[i].v0],
-                mesh.vertices[mesh.polygons[i].v1],
-                mesh.vertices[mesh.polygons[i].v2]
-        };
-        draw_polygon(poly, default_color);
+    for(int i = 0; i < mesh.faces.size(); i++){
+        draw_polygon(mesh.face_vertices(i), default_color);
     }
     for(auto s : mesh.selected){
         if(s.second) {
-            vec3 poly[3] = {
-                    mesh.vertices[mesh.polygons[s.first].v0],
-                    mesh.vertices[mesh.polygons[s.first].v1],
-                    mesh.vertices[mesh.polygons[s.first].v2]
-            };
-            draw_polygon(poly, vec3(255, 100, 100));
+            draw_polygon(mesh.face_vertices(s.first), dvec3(255, 100, 100));
         }
     }
 }

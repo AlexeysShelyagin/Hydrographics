@@ -7,13 +7,12 @@
 #include "include/glm/vec2.hpp"
 #include "include/glm/mat2x2.hpp"
 namespace Slice{
-    class Slice_face{
+    class Slice_edge{
     public:
         int poly_i;
         int e0, e1;
-        dvec3 n;
 
-        Slice_face(int polygon_i, int edge0, int edge1, dvec3 n_);
+        Slice_edge(int polygon_i, int edge0, int edge1);
     };
 
     class Slice_unique_vertex{

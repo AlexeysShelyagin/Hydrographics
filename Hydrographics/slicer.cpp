@@ -10,11 +10,10 @@
 using namespace glm;
 using namespace Slice;
 
-Slice_face::Slice_face(int polygon_i, int edge0, int edge1, dvec3 n_) {
+Slice_edge::Slice_edge(int polygon_i, int edge0, int edge1) {
     poly_i = polygon_i;
     e0 = edge0;
     e1 = edge1;
-    n = n_;
 }
 
 Slice_unique_vertex::Slice_unique_vertex(dvec3 vertex, int edge_){
@@ -67,6 +66,16 @@ dvec3 point_on_height(Mesh &mesh, int poly_i, int edge_i, double h) {
     return p;
 }
 
+int normal_by_vertices(std::vector < std::vector < int > > &normal_indices, int v0, int v1){
+    int n00 = normal_indices[v0][0], n01 = normal_indices[v0][1];
+    int n10 = normal_indices[v1][0], n11 = normal_indices[v1][1];
+
+    if(n00 == n10) return n00;
+    if(n00 == n11) return n00;
+    if(n01 == n10) return n01;
+    if(n01 == n11) return n01;
+}
+
 int edge_intersect_face(Mesh &slice, dvec3 &st, dvec3 &en, Face &face){
     std::vector < dvec2 > face_res;
     std::vector < int > face_res_i;
@@ -99,12 +108,10 @@ bool join_outlines(Mesh &slice, int face1_i, int face2_i){
     for (int i = 0; i < MAX_JOIN_ITERATIONS; i++) {
         if (i1 != -1) {
             st = slice.vertices[face1.verts[i1]];
-            std::cout << "face1: ";
             i1_new = edge_intersect_face(slice, st, en, face1);
         }
         if (i2 != -1) {
             en = slice.vertices[face2.verts[i2]];
-            std::cout << "face2: ";
             i2_new = edge_intersect_face(slice, en, st, face2);
         }
 
@@ -119,7 +126,8 @@ bool join_outlines(Mesh &slice, int face1_i, int face2_i){
 
 Mesh slice_mesh(Mesh &mesh, double h, dvec2 border_st, dvec2 border_en){
     //std::vector < int > polygons_to_cut;
-    std::vector < Slice_face > intersections;
+    std::vector < Slice_edge > intersections;
+    std::vector < dvec3 > normals;
 
     for(int i = 0; i < mesh.faces.size(); i++){
         std::vector < dvec3 > face = mesh.face_vertices(i);
@@ -136,7 +144,8 @@ Mesh slice_mesh(Mesh &mesh, double h, dvec2 border_st, dvec2 border_en){
             }
         }
         if(edge0 != -1){
-            intersections.push_back(Slice_face(i, edge0, edge1, mesh.faces[i].n));
+            intersections.push_back(Slice_edge(i, edge0, edge1));
+            normals.push_back(mesh.faces[i].n);
             //polygons_to_cut.push_back(i);
         }
     }
@@ -183,6 +192,7 @@ Mesh slice_mesh(Mesh &mesh, double h, dvec2 border_st, dvec2 border_en){
         }
     }
 
+    std::vector < std::vector < int > > normal_indices(slice.vertices.size(), std::vector < int > ());
     std::vector < std::vector < int > > outline_graph(slice.vertices.size(), std::vector < int > ());
     for(int i = 0; i < edges.size(); i++){
         if (edges[i].size() != 2){
@@ -190,6 +200,9 @@ Mesh slice_mesh(Mesh &mesh, double h, dvec2 border_st, dvec2 border_en){
         }
         outline_graph[edges[i][0]].push_back(edges[i][1]);
         outline_graph[edges[i][1]].push_back(edges[i][0]);
+
+        normal_indices[edges[i][0]].push_back(i);
+        normal_indices[edges[i][1]].push_back(i);
     }
 
     std::vector < bool > used(slice.vertices.size());
@@ -216,11 +229,18 @@ Mesh slice_mesh(Mesh &mesh, double h, dvec2 border_st, dvec2 border_en){
     std::vector < int > plane = {last_v, last_v - 1, last_v - 2, last_v - 3};
     slice.add_face(plane, dvec3(0, 0, 1));
 
-    int n = slice.faces.size();
-    for(int i = 0; i < n - 1; i++){
-        join_outlines(slice, i, i + 1);
+    std::cout << "\n-----------------\n";
+    for(int i = 0; i < slice.faces[0].verts.size(); i++){
+        dvec3 n = normals[normal_by_vertices(
+            normal_indices,
+            slice.faces[0].verts[i],
+            slice.faces[0].verts[(i + 1) % slice.faces[0].verts.size()]
+        )];
+        std::cout << slice.faces[0].verts[i] << ' ' << slice.faces[0].verts[(i + 1) % slice.faces[0].verts.size()] << ": ";
+        std::cout << n.x << ", " << n.y << ", " << n.z << '\n';
     }
-    join_outlines(slice, 0, 4);
+
+    //join_outlines(slice, 0, 1);
 
 /*
     std::cout << "\n-------------------\n";
@@ -233,13 +253,6 @@ Mesh slice_mesh(Mesh &mesh, double h, dvec2 border_st, dvec2 border_en){
     }
     std::cout << '\n';
 
-    for(int i = 0; i < edges.size(); i++){
-        std::cout << i << ": ";
-        for(int j = 0; j < edges[i].size(); j++){
-            std::cout << edges[i][j] << ' ';
-        }
-        std::cout << '\n';
-    }
 
     std::cout << '\n';
     for(int i = 0; i < slice.vertices.size(); i++){

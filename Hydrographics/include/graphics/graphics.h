@@ -19,7 +19,7 @@ std::string sf_window_event();
 dvec2 pos_on_view(std::string view_name, dvec3 coord);
 
 void draw_circle(std::string surf_name, dvec2 pos = dvec2());
-void draw_text(std::string surf_name, std::string txt, int x = 0, int y = 0);
+void draw_text(std::string surf_name, std::string txt, dvec2 pos = dvec2());
 void draw_line(std::string surf_name, dvec2 st = dvec2(), dvec2 en = dvec2(), dvec3 color = dvec3(255, 255, 255));
 void sf_render_window();
 void sf_clear_window();

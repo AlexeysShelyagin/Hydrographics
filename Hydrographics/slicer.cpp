@@ -93,18 +93,24 @@ bool join_outlines(Mesh &slice, int face1_i, int face2_i){
     Face face1 = slice.faces[face1_i];
     Face face2 = slice.faces[face2_i];
 
+
     int i1 = 0, i2 = 0, i1_new, i2_new;
+    dvec3  st = slice.vertices[face1.verts[i1]], en = slice.vertices[face2.verts[i2]];
     for (int i = 0; i < MAX_JOIN_ITERATIONS; i++) {
-        dvec3 st = slice.vertices[face1.verts[i1]];
-        dvec3 en = slice.vertices[face2.verts[i2]];
-        if (i1 != -1)
+        if (i1 != -1) {
+            st = slice.vertices[face1.verts[i1]];
+            std::cout << "face1: ";
             i1_new = edge_intersect_face(slice, st, en, face1);
-        if (i2 != -1)
+        }
+        if (i2 != -1) {
+            en = slice.vertices[face2.verts[i2]];
+            std::cout << "face2: ";
             i2_new = edge_intersect_face(slice, en, st, face2);
+        }
 
         if(i1_new == -1 && i2_new == -1) break;
-        i1 = i1_new;
-        i2 = i2_new;
+        if(i1_new != -1) i1 = i1_new;
+        if(i2_new != -1) i1 = i2_new;
     }
 
     slice.add_face(face1.verts[i1], face1.verts[i1], face2.verts[i2]);
@@ -140,7 +146,6 @@ Mesh slice_mesh(Mesh &mesh, double h, dvec2 border_st, dvec2 border_en){
         return empty_slice;
     }
 
-    Mesh slice_img;
     std::vector < Slice_unique_vertex > all_verts;
     for(int i = 0; i < intersections.size(); i++){
         dvec3 v0 = point_on_height(mesh, intersections[i].poly_i, intersections[i].e0, h);
@@ -148,15 +153,6 @@ Mesh slice_mesh(Mesh &mesh, double h, dvec2 border_st, dvec2 border_en){
 
         all_verts.push_back(Slice_unique_vertex(v0, i));
         all_verts.push_back(Slice_unique_vertex(v1, i));
-
-        dvec3 ph = v0 + (v1 - v0) * 0.5;
-        ph.z += 0.01;
-        slice_img.add_vertex(ph);
-        slice_img.add_vertex(v0);
-        slice_img.add_vertex(v1);
-        int last = slice_img.vertices.size() - 1;
-        slice_img.add_face(last, last - 1, last - 2, intersections[i].n);
-
     }
 
     std::sort(all_verts.begin(), all_verts.end(), vec3_unique_comp);
@@ -202,7 +198,7 @@ Mesh slice_mesh(Mesh &mesh, double h, dvec2 border_st, dvec2 border_en){
         if (!used[i]){
             st = i;
             std::vector < int > outline_seq;
-            while(!used[st]){
+            while(!used[st] && !outline_graph[st].empty()){
                 outline_seq.push_back(st);
                 used[st] = true;
                 if(!used[outline_graph[st][0]]) st = outline_graph[st][0];
@@ -224,6 +220,8 @@ Mesh slice_mesh(Mesh &mesh, double h, dvec2 border_st, dvec2 border_en){
     for(int i = 0; i < n - 1; i++){
         join_outlines(slice, i, i + 1);
     }
+    join_outlines(slice, 0, 4);
+
 /*
     std::cout << "\n-------------------\n";
 

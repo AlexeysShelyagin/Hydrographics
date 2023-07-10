@@ -9,8 +9,8 @@ int main() {
     //std::cout << cube.faces.size();
 
     init_render_window("Hydrographics", 200);
-    for(double h = 0.3; h < 1; h += 0.0001) {
-        h = 0.1;
+    for(double h = 0.1; h < 1; h += 0.0001) {
+        //h = 0.1;
         Mesh slice = slice_mesh(cube, h, dvec2(-1.3, -1), dvec2(1.3, 1.3));
         //Mesh slice = slice_mesh(cube, h, dvec2(-2.5, -3), dvec2(2, 3));
 
@@ -23,7 +23,7 @@ int main() {
         render_clear();
         //render_mesh(cube, dvec3(50, 50, 50));
         //render_mesh(plane, vec3(232, 54, 235));
-        render_mesh(slice, dvec3(232, 54, 235), true);
+        render_mesh(slice, dvec3(232, 54, 235), false);
         render_show();
         //while(window_not_closed()) {}
         if(!window_not_closed()) break;

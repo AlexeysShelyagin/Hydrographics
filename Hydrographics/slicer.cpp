@@ -125,6 +125,8 @@ bool join_outlines(Mesh &slice, int face1_i, int face2_i){
 }
 
 Mesh slice_mesh(Mesh &mesh, double h, dvec2 border_st, dvec2 border_en){
+    //std::cout << "\n-------------------\n";
+
     //std::vector < int > polygons_to_cut;
     std::vector < Slice_edge > intersections;
     std::vector < dvec3 > normals;
@@ -229,7 +231,28 @@ Mesh slice_mesh(Mesh &mesh, double h, dvec2 border_st, dvec2 border_en){
     std::vector < int > plane = {last_v, last_v - 1, last_v - 2, last_v - 3};
     slice.add_face(plane, dvec3(0, 0, 1));
 
-    std::cout << "\n-----------------\n";
+    int outline_n = slice.faces.size() - 1;
+    for(int i = 0; i < outline_n; i++){
+        for(int j = 0; j < slice.faces[i].verts.size(); j++){
+            int v0 = slice.faces[i].verts[j];
+            int v1 = slice.faces[i].verts[(j + 1) % slice.faces[i].verts.size()];
+
+            dvec3 n = normals[normal_by_vertices(normal_indices, v0, v1)];
+
+            dvec3 p0 = slice.vertices[v0], p1 = slice.vertices[v1];
+            slice.add_vertex(p0 + (p1 - p0) * 0.5);
+            slice.add_vertex(p0 + (p1 - p0) * 0.5 + normalize(n) * 0.1);
+            slice.add_face(slice.vertices.size() - 2, slice.vertices.size() - 1, slice.vertices.size() - 1);
+
+            //std::cout << v0 << ' ' << v1 << ", " << normal_by_vertices(normal_indices, v0, v1) << ": ";
+            //std::cout << n.x << ", " << n.y << ", " << n.z << '\n';
+        }
+    }
+
+    //join_outlines(slice, 0, 1);
+
+/*
+    std::cout << "\n-------------------\n";
     for(int i = 0; i < slice.faces[0].verts.size(); i++){
         dvec3 n = normals[normal_by_vertices(
             normal_indices,
@@ -239,11 +262,6 @@ Mesh slice_mesh(Mesh &mesh, double h, dvec2 border_st, dvec2 border_en){
         std::cout << slice.faces[0].verts[i] << ' ' << slice.faces[0].verts[(i + 1) % slice.faces[0].verts.size()] << ": ";
         std::cout << n.x << ", " << n.y << ", " << n.z << '\n';
     }
-
-    //join_outlines(slice, 0, 1);
-
-/*
-    std::cout << "\n-------------------\n";
 
     for(Face seq : slice.faces){
         for(int vert : seq.verts){

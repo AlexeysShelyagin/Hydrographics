@@ -50,11 +50,10 @@ Mesh load_model(std::string filepath, std::string filename){
         }
 
         for (uint64_t vertex_i = 0; vertex_i < shape.mesh.indices.size(); vertex_i += 3) {
-            uint64_t normal_i = shape.mesh.indices[vertex_i].normal_index;
             dvec3 n = dvec3(
-                attrib.normals[normal_i + 0],
-                attrib.normals[normal_i + 1],
-                attrib.normals[normal_i + 2]
+                attrib.normals[shape.mesh.indices[vertex_i + 0].normal_index * 3 + 0],
+                attrib.normals[shape.mesh.indices[vertex_i + 1].normal_index * 3 + 1],
+                attrib.normals[shape.mesh.indices[vertex_i + 2].normal_index * 3 + 2]
             );
             model.add_face(
                     shape.mesh.indices[vertex_i + 0].vertex_index,

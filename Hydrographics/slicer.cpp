@@ -3,6 +3,7 @@
 #include <vector>
 #include <algorithm>
 #include <iostream>
+#include <iomanip>
 
 #define DOUBLE_VERTEX_PRECISION 1e-9
 #define MAX_JOIN_ITERATIONS 100
@@ -76,7 +77,7 @@ int normal_by_vertices(std::vector < std::vector < int > > &normal_indices, int 
     if(n01 == n11) return n01;
 }
 
-int edge_intersect_face(Mesh &slice, dvec3 &st, dvec3 &en, Face &face){
+int closest_intersection(Mesh &slice, dvec3 &st, dvec3 &en, Face &face){
     std::vector < dvec2 > face_res;
     std::vector < int > face_res_i;
     for(int i = 0; i < face.verts.size(); i++){
@@ -98,7 +99,20 @@ int edge_intersect_face(Mesh &slice, dvec3 &st, dvec3 &en, Face &face){
     return max_t_i;
 }
 
-bool join_outlines(Mesh &slice, int face1_i, int face2_i){
+int face_intersection(Mesh &slice, dvec3 &st, dvec3 &en, Face &face){
+    int n = 0;
+    std::vector < int > face_res_i;
+    for(int i = 0; i < face.verts.size(); i++){
+        dvec2 res = edges_intersect(st, en, slice.vertices[face.verts[i]], slice.vertices[face.verts[(i + 1) % face.verts.size()]]);
+        if(is_intersect(res, true)){
+            n++;
+        }
+    }
+
+    return n;
+}
+
+bool connect_outlines(Mesh &slice, int face1_i, int face2_i){
     Face face1 = slice.faces[face1_i];
     Face face2 = slice.faces[face2_i];
 
@@ -108,11 +122,11 @@ bool join_outlines(Mesh &slice, int face1_i, int face2_i){
     for (int i = 0; i < MAX_JOIN_ITERATIONS; i++) {
         if (i1 != -1) {
             st = slice.vertices[face1.verts[i1]];
-            i1_new = edge_intersect_face(slice, st, en, face1);
+            i1_new = closest_intersection(slice, st, en, face1);
         }
         if (i2 != -1) {
             en = slice.vertices[face2.verts[i2]];
-            i2_new = edge_intersect_face(slice, en, st, face2);
+            i2_new = closest_intersection(slice, en, st, face2);
         }
 
         if(i1_new == -1 && i2_new == -1) break;
@@ -122,6 +136,35 @@ bool join_outlines(Mesh &slice, int face1_i, int face2_i){
 
     slice.add_face(face1.verts[i1], face1.verts[i1], face2.verts[i2]);
     return false;
+}
+
+std::vector < int > outline_inside(Mesh &slice, int outline_i, std::vector < dvec3 > normals, std::vector < std::vector < int > > normal_indices){
+    int v0 = slice.faces[outline_i].verts[0];
+    int v1 = slice.faces[outline_i].verts[1];
+    dvec3 n = normals[normal_by_vertices(normal_indices, v0, v1)];
+
+    dvec3 st = slice.vertices[v0] + (slice.vertices[v1] - slice.vertices[v0]) * 0.5;
+    dvec3 en = st + n * 1000.0;
+
+    std::vector < int > inside;
+    for(int i = 0; i < slice.faces.size(); i++){
+        int num = face_intersection(slice, st, en, slice.faces[i]);
+        if(num % 2 == 1 && i != outline_i){
+            inside.push_back(i);
+        }
+    }
+
+    return inside;
+}
+
+void connect_group(Mesh &slice, std::vector < int > to_connect){
+    std::vector < bool > connected(to_connect.size());
+
+    for(int i = 0; i < to_connect.size() - 1; i++){
+        if(!connected[i]){
+            
+        }
+    }
 }
 
 Mesh slice_mesh(Mesh &mesh, double h, dvec2 border_st, dvec2 border_en){
@@ -140,11 +183,14 @@ Mesh slice_mesh(Mesh &mesh, double h, dvec2 border_st, dvec2 border_en){
         int edge0 = -1, edge1 = -1;
         for(int j = 0; j < 3; j++){
             int v0 = j, v1 = (j + 1) % 3;
+
             if(std::min(face[v0].z, face[v1].z) <= h && h <= std::max(face[v0].z, face[v1].z)){
                 if(edge0 == -1) edge0 = j;
                 else edge1 = j;
             }
         }
+        // TODO: fix colision with parallel surface
+
         if(edge0 != -1){
             intersections.push_back(Slice_edge(i, edge0, edge1));
             normals.push_back(mesh.faces[i].n);
@@ -232,24 +278,55 @@ Mesh slice_mesh(Mesh &mesh, double h, dvec2 border_st, dvec2 border_en){
     slice.add_face(plane, dvec3(0, 0, 1));
 
     int outline_n = slice.faces.size() - 1;
+    std::vector < std::vector < int > > inside(outline_n, std::vector < int > ());
+    int layers_n = 0;
     for(int i = 0; i < outline_n; i++){
-        for(int j = 0; j < slice.faces[i].verts.size(); j++){
-            int v0 = slice.faces[i].verts[j];
-            int v1 = slice.faces[i].verts[(j + 1) % slice.faces[i].verts.size()];
+        inside[i] = outline_inside(slice, i, normals, normal_indices);
+        if(layers_n < inside[i].size()) layers_n = inside[i].size();
+    }
+    layers_n++;
 
-            dvec3 n = normals[normal_by_vertices(normal_indices, v0, v1)];
+    std::vector < std::vector < int > > layers(layers_n, std::vector < int > ());
+    for(int i = 0; i < outline_n; i++){
+        layers[inside[i].size()].push_back(i);
+    }
+    layers[0].push_back(outline_n);
 
-            dvec3 p0 = slice.vertices[v0], p1 = slice.vertices[v1];
-            slice.add_vertex(p0 + (p1 - p0) * 0.5);
-            slice.add_vertex(p0 + (p1 - p0) * 0.5 + normalize(n) * 0.1);
-            slice.add_face(slice.vertices.size() - 2, slice.vertices.size() - 1, slice.vertices.size() - 1);
+    std::vector < bool > connected(outline_n);
+    std::unordered_map < int, std::vector < int > > connection_groups(outline_n);
+    for(int i = 0; i < outline_n; i++){
+        if(!connected[i]) {
+            int layer = inside[i].size();
 
-            //std::cout << v0 << ' ' << v1 << ", " << normal_by_vertices(normal_indices, v0, v1) << ": ";
-            //std::cout << n.x << ", " << n.y << ", " << n.z << '\n';
+            if (layer % 2 != 0) {
+                for (int per_find: layers[layer - 1]) {
+                    for (int per_match: inside[i]) {
+                        if (per_find == per_match) {
+                            connection_groups[per_match].push_back(i);
+                            connected[i] = true;
+                            connected[per_match] = true;
+                            break;
+                        }
+                    }
+                }
+            }
         }
     }
 
-    //join_outlines(slice, 0, 1);
+    for(auto el : connection_groups){
+        std::vector < int > to_connect = el.second;
+        to_connect.push_back(el.first);
+
+        connect_group(slice, to_connect);
+    }
+
+    for(auto i : connection_groups){
+        std::cout << i.first << ": ";
+        for(int j : connection_groups[i.first]){
+            std::cout << j << ' ';
+        }
+        std::cout << '\n';
+    }
 
 /*
     std::cout << "\n-------------------\n";

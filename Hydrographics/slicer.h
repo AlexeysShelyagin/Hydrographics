@@ -6,6 +6,7 @@
 #include "include/glm/vec3.hpp"
 #include "include/glm/vec2.hpp"
 #include "include/glm/mat2x2.hpp"
+
 namespace Slice{
     class Slice_edge{
     public:
@@ -24,7 +25,6 @@ namespace Slice{
         Slice_unique_vertex(dvec3 vertex, int edge_);
     };
 }
-
 
 Mesh slice_mesh(Mesh &mesh, double h = 0, dvec2 border_st = dvec2(-1, -1), dvec2 border_en = dvec2(1, 1));
 

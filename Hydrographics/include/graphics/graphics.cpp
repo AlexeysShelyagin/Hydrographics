@@ -91,8 +91,8 @@ void sf_init_window(int w, int h, std::string title, double scale){
 
     screen = window_surface(w, h);
     surf_top = window_surface(screen.w / 2, screen.h / 2, screen.w / 2, 0);
-    surf_front = window_surface(screen.w / 2, screen.h / 2,0, screen.h / 2);
-    surf_side = window_surface(screen.w / 2, screen.h / 2, screen.w / 2, screen.h / 2);
+    surf_front = window_surface(screen.w / 2, screen.h / 2, screen.w / 2, screen.h / 2);
+    surf_side = window_surface(screen.w / 2, screen.h / 2,0, screen.h / 2);
 
     surfaces["screen"] = &screen;
     surfaces["top"] = &surf_top;

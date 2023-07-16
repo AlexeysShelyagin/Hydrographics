@@ -5,11 +5,11 @@
 #include "slicer.h"
 
 int main() {
-    Mesh cube = load_model("../../Tests/", "Pyramid.obj");
+    Mesh cube = load_model("../../Tests/", "Perimeter_test2.obj");
     //std::cout << cube.faces.size();
 
     init_render_window("Hydrographics", 200);
-    for(double h = 0.1; h < 1; h += 0.0001) {
+    for(double h = 0.10000001; h < 1; h += 0.0005) {
         //h = 0.1;
         Mesh slice = slice_mesh(cube, h, dvec2(-1.3, -1), dvec2(1.3, 1.3));
         //Mesh slice = slice_mesh(cube, h, dvec2(-2.5, -3), dvec2(2, 3));
@@ -25,7 +25,7 @@ int main() {
         //render_mesh(plane, vec3(232, 54, 235));
         render_mesh(slice, dvec3(232, 54, 235), false);
         render_show();
-        //while(window_not_closed()) {}
+        while(window_not_closed()) {}
         if(!window_not_closed()) break;
     }
     return 0;

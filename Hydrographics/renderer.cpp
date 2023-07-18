@@ -47,7 +47,7 @@ void draw_face(std::vector < dvec3 > poly, dvec3 color = dvec3(255, 255, 255)){
     }
 }
 
-void render_mesh(Mesh &mesh, dvec3 default_color, bool draw_indices){
+void render_mesh(Mesh &mesh, dvec3 default_color, bool draw_indices, bool draw_face_number){
 
     for(int i = 0; i < mesh.vertices.size(); i++) {
         //draw_circle("top", pos_on_view("top", mesh.vertices[i]));
@@ -64,7 +64,9 @@ void render_mesh(Mesh &mesh, dvec3 default_color, bool draw_indices){
     for(int i = 0; i < mesh.faces.size(); i++){
         draw_face(mesh.face_vertices(i), default_color);
 
-        draw_text("top", std::to_string(i), pos_on_view("top", mesh.vertices[mesh.faces[i].verts[0]]));
+        if(draw_face_number){
+            draw_text("top", std::to_string(i), pos_on_view("top", mesh.vertices[mesh.faces[i].verts[0]]));
+        }
     }
     for(auto s : mesh.selected){
         if(s.second) {

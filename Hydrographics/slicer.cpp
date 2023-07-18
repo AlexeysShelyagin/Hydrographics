@@ -3,10 +3,12 @@
 #include <vector>
 #include <algorithm>
 #include <iostream>
-#include <iomanip>
+#include <stack>
+#include <unordered_map>
 
 #define DOUBLE_VERTEX_PRECISION 1e-9
 #define MAX_JOIN_ITERATIONS 100
+#define MAX_DIMENSION 1000.0
 
 using namespace glm;
 using namespace Slice;
@@ -101,7 +103,6 @@ int closest_intersection(Mesh &slice, dvec3 &st, dvec3 &en, Face &face){
 
 int face_intersection(Mesh &slice, dvec3 &st, dvec3 &en, Face &face){
     int n = 0;
-    std::vector < int > face_res_i;
     for(int i = 0; i < face.verts.size(); i++){
         dvec2 res = edges_intersect(st, en, slice.vertices[face.verts[i]], slice.vertices[face.verts[(i + 1) % face.verts.size()]]);
         if(is_intersect(res, true)){
@@ -112,7 +113,20 @@ int face_intersection(Mesh &slice, dvec3 &st, dvec3 &en, Face &face){
     return n;
 }
 
-bool connect_outlines(Mesh &slice, int face1_i, int face2_i){
+double face_intersection_dist(Mesh &slice, dvec3 &st, dvec3 &en, Face &face){
+    double min_dist = MAX_DIMENSION;
+    for(int i = 0; i < face.verts.size(); i++){
+        dvec2 res = edges_intersect(st, en, slice.vertices[face.verts[i]], slice.vertices[face.verts[(i + 1) % face.verts.size()]]);
+        if(is_intersect(res, true)){
+            if(res.x < min_dist) min_dist = res.x;
+        }
+    }
+
+    if(min_dist > 1 || min_dist < 0) return -1;
+    return min_dist;
+}
+
+std::pair < int, int > find_connection(Mesh &slice, int face1_i, int face2_i){
     Face face1 = slice.faces[face1_i];
     Face face2 = slice.faces[face2_i];
 
@@ -134,8 +148,11 @@ bool connect_outlines(Mesh &slice, int face1_i, int face2_i){
         if(i2_new != -1) i1 = i2_new;
     }
 
-    slice.add_face(face1.verts[i1], face1.verts[i1], face2.verts[i2]);
-    return false;
+    return std::make_pair(face1.verts[i1], face2.verts[i2]);
+}
+
+void connect_outlines(Mesh &slice, int v1, int v2){
+    slice.add_face(v1, v1, v2);
 }
 
 std::vector < int > outline_inside(Mesh &slice, int outline_i, std::vector < dvec3 > normals, std::vector < std::vector < int > > normal_indices){
@@ -144,7 +161,7 @@ std::vector < int > outline_inside(Mesh &slice, int outline_i, std::vector < dve
     dvec3 n = normals[normal_by_vertices(normal_indices, v0, v1)];
 
     dvec3 st = slice.vertices[v0] + (slice.vertices[v1] - slice.vertices[v0]) * 0.5;
-    dvec3 en = st + n * 1000.0;
+    dvec3 en = st + n * MAX_DIMENSION;
 
     std::vector < int > inside;
     for(int i = 0; i < slice.faces.size(); i++){
@@ -158,12 +175,53 @@ std::vector < int > outline_inside(Mesh &slice, int outline_i, std::vector < dve
 }
 
 void connect_group(Mesh &slice, std::vector < int > to_connect){
-    std::vector < bool > connected(to_connect.size());
+    std::stack < std::pair < int, int > > connect;
 
     for(int i = 0; i < to_connect.size() - 1; i++){
-        if(!connected[i]){
-            
+        connect.push(std::make_pair(to_connect[i], to_connect[i + 1]));
+    }
+
+    std::unordered_map < int, int > verts_to_connect;
+
+    while(!connect.empty()){
+        int from = connect.top().first;
+        int to = connect.top().second;
+        connect.pop();
+
+        //std::cout << from << " -> " << to << '\n';
+        std::pair < int, int > verts = find_connection(slice, from, to);
+        std::vector < std::pair < double, int > > intersected;
+        for(int i : to_connect){
+            if(i != from && i != to){
+                double dist = face_intersection_dist(
+                    slice,
+                    slice.vertices[verts.first],
+                    slice.vertices[verts.second],
+                    slice.faces[i]
+                );
+                if(dist != -1){
+                    intersected.push_back(std::make_pair(dist, i));
+                }
+            }
         }
+
+        if(intersected.empty()){
+            verts_to_connect[std::min(verts.first, verts.second)] = std::max(verts.first, verts.second);
+        }
+        else{
+            std::sort(intersected.begin(), intersected.end());
+
+            intersected.insert(intersected.begin(), std::make_pair(from, 0));
+            intersected.insert(intersected.end(), std::make_pair(to, 0));
+
+            for(int i = 0; i < intersected.size() - 1; i++){
+                connect.push(std::make_pair(intersected[i].second, intersected[i + 1].second));
+            }
+        }
+    }
+
+    for(auto i : verts_to_connect){
+        connect_outlines(slice, i.first, i.second);
     }
 }
 
@@ -319,15 +377,6 @@ Mesh slice_mesh(Mesh &mesh, double h, dvec2 border_st, dvec2 border_en){
 
         connect_group(slice, to_connect);
     }
-
-    for(auto i : connection_groups){
-        std::cout << i.first << ": ";
-        for(int j : connection_groups[i.first]){
-            std::cout << j << ' ';
-        }
-        std::cout << '\n';
-    }
-
 /*
     std::cout << "\n-------------------\n";
     for(int i = 0; i < slice.faces[0].verts.size(); i++){

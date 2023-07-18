@@ -5,7 +5,7 @@
 #include "slicer.h"
 
 int main() {
-    Mesh cube = load_model("../../Tests/", "Perimeter_test2.obj");
+    Mesh cube = load_model("../../Tests/", "Perimeter_test4.obj");
     //std::cout << cube.faces.size();
 
     init_render_window("Hydrographics", 200);
@@ -23,7 +23,7 @@ int main() {
         render_clear();
         //render_mesh(cube, dvec3(50, 50, 50));
         //render_mesh(plane, vec3(232, 54, 235));
-        render_mesh(slice, dvec3(232, 54, 235), false);
+        render_mesh(slice, dvec3(232, 54, 235), false, false);
         render_show();
         while(window_not_closed()) {}
         if(!window_not_closed()) break;

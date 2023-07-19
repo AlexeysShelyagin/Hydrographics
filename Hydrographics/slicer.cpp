@@ -212,13 +212,6 @@ Face merge_outlines(Mesh &slice, std::vector < std::vector < Slice_connect_data 
     }
     face.verts.push_back(face.verts[0]);
 
-    std::cout << face_i << ": ";
-    std::cout << "(";
-    for(int i: face.verts){
-        std::cout << i << ", ";
-    }
-    std::cout << ") (" << parent_data.v0 << ", " << parent_data.v1 << ")\n";
-
     return face;
 }
 
@@ -239,7 +232,6 @@ Face connect_group(Mesh &slice, std::vector < int > faces){
         connect.pop();
         if(connected[from] && connected[to]) continue;
 
-        //std::cout << from << " -> " << to << '\n';
         std::pair < int, int > verts = find_connection(slice, from, to);
         std::vector < std::pair < double, int > > intersected;
         for(int i : faces){
@@ -285,28 +277,15 @@ Face connect_group(Mesh &slice, std::vector < int > faces){
 
     std::vector < std::vector < Slice_connect_data > > connection_tree(slice.faces.size(), std::vector < Slice_connect_data > ());
     for(auto i : connection_data){
-        //connect_outlines(slice, i.v0, i.v1);
         connection_tree[i.face0].push_back(Slice_connect_data(i.v0, i.v1, i.face0, i.face1));
         connection_tree[i.face1].push_back(Slice_connect_data(i.v1, i.v0, i.face1, i.face0));
     }
-/*
-    std::cout << "\n--------" << faces[faces.size() - 1] << "--------\n";
-    for(int i = 0; i < connection_tree.size(); i++){
-       std::cout << i << ": ";
-       for(auto j : connection_tree[i]){
-           std::cout << j.face1 << "(" << j.v0 << ", " << j.v1 << ") ";
-       }
-       std::cout << '\n';
-    }
-*/
+
     std::vector < bool > merged(slice.faces.size());
     return merge_outlines(slice, connection_tree, merged, faces[faces.size() - 1]);
 }
 
 Mesh slice_mesh(Mesh &mesh, double h, dvec2 border_st, dvec2 border_en){
-    //std::cout << "\n-------------------\n";
-
-    //std::vector < int > polygons_to_cut;
     std::vector < Slice_edge > intersections;
     std::vector < dvec3 > normals;
 
@@ -458,33 +437,6 @@ Mesh slice_mesh(Mesh &mesh, double h, dvec2 border_st, dvec2 border_en){
 
         slice_ready_to_triangulate.add_face(connect_group(slice, to_connect));
     }
-/*
-    std::cout << "\n-------------------\n";
-    for(int i = 0; i < slice.faces[0].verts.size(); i++){
-        dvec3 n = normals[normal_by_vertices(
-            normal_indices,
-            slice.faces[0].verts[i],
-            slice.faces[0].verts[(i + 1) % slice.faces[0].verts.size()]
-        )];
-        std::cout << slice.faces[0].verts[i] << ' ' << slice.faces[0].verts[(i + 1) % slice.faces[0].verts.size()] << ": ";
-        std::cout << n.x << ", " << n.y << ", " << n.z << '\n';
-    }
 
-    for(Face seq : slice.faces){
-        for(int vert : seq.verts){
-            std::cout << vert << " -> ";
-        }
-        std::cout << seq.verts[0] << '\n';
-    }
-    std::cout << '\n';
-
-
-    std::cout << '\n';
-    for(int i = 0; i < slice.vertices.size(); i++){
-        std::cout << i << ": " << slice.vertices[i].x << ' ' << slice.vertices[i].y << ' ' <<slice.vertices[i].z;
-        //for(int j = 0; j < edge_groups[i].size(); j++) std::cout << edge_groups[i][j] << ' ';
-        std::cout << '\n';
-    }
-*/
     return slice_ready_to_triangulate;
 }

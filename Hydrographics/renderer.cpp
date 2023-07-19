@@ -50,7 +50,7 @@ void draw_face(std::vector < dvec3 > poly, dvec3 color = dvec3(255, 255, 255)){
 void render_mesh(Mesh &mesh, dvec3 default_color, bool draw_indices, bool draw_face_number){
 
     for(int i = 0; i < mesh.vertices.size(); i++) {
-        draw_circle("top", pos_on_view("top", mesh.vertices[i]));
+        //draw_circle("top", pos_on_view("top", mesh.vertices[i]));
         //draw_circle("front", pos_on_view("front", mesh.vertices[i]));
         //draw_circle("side", pos_on_view("side", mesh.vertices[i]));
 

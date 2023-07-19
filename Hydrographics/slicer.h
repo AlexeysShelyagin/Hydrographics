@@ -24,6 +24,15 @@ namespace Slice{
         Slice_unique_vertex() = default;
         Slice_unique_vertex(dvec3 vertex, int edge_);
     };
+
+    class Slice_connect_data{
+    public:
+        int v0, v1;
+        int face0, face1;
+
+        Slice_connect_data();
+        Slice_connect_data(int _v0, int _v1, int _face0, int _face1);
+    };
 }
 
 Mesh slice_mesh(Mesh &mesh, double h = 0, dvec2 border_st = dvec2(-1, -1), dvec2 border_en = dvec2(1, 1));

@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <iostream>
 #include <stack>
-#include <unordered_map>
+#include <map>
 
 #define DOUBLE_VERTEX_PRECISION 1e-9
 #define MAX_JOIN_ITERATIONS 100
@@ -22,6 +22,18 @@ Slice_edge::Slice_edge(int polygon_i, int edge0, int edge1) {
 Slice_unique_vertex::Slice_unique_vertex(dvec3 vertex, int edge_){
     vert = vertex;
     edge = edge_;
+}
+
+Slice_connect_data::Slice_connect_data(){
+    v0 = v1 = -1;
+    face0 = face1 = -1;
+}
+
+Slice_connect_data::Slice_connect_data(int _v0, int _v1, int _face0, int _face1) {
+    v0 = _v0;
+    v1 = _v1;
+    face0 = _face0;
+    face1 = _face1;
 }
 
 bool vec3_unique_comp(Slice_unique_vertex a, Slice_unique_vertex b){
@@ -130,7 +142,6 @@ std::pair < int, int > find_connection(Mesh &slice, int face1_i, int face2_i){
     Face face1 = slice.faces[face1_i];
     Face face2 = slice.faces[face2_i];
 
-
     int i1 = 0, i2 = 0, i1_new, i2_new;
     dvec3  st = slice.vertices[face1.verts[i1]], en = slice.vertices[face2.verts[i2]];
     for (int i = 0; i < MAX_JOIN_ITERATIONS; i++) {
@@ -145,14 +156,12 @@ std::pair < int, int > find_connection(Mesh &slice, int face1_i, int face2_i){
 
         if(i1_new == -1 && i2_new == -1) break;
         if(i1_new != -1) i1 = i1_new;
-        if(i2_new != -1) i1 = i2_new;
+        if(i2_new != -1) i2 = i2_new;
     }
 
-    return std::make_pair(face1.verts[i1], face2.verts[i2]);
-}
+    // TODO: there's an error
 
-void connect_outlines(Mesh &slice, int v1, int v2){
-    slice.add_face(v1, v1, v2);
+    return std::make_pair(face1.verts[i1], face2.verts[i2]);
 }
 
 std::vector < int > outline_inside(Mesh &slice, int outline_i, std::vector < dvec3 > normals, std::vector < std::vector < int > > normal_indices){
@@ -174,24 +183,66 @@ std::vector < int > outline_inside(Mesh &slice, int outline_i, std::vector < dve
     return inside;
 }
 
-void connect_group(Mesh &slice, std::vector < int > to_connect){
-    std::stack < std::pair < int, int > > connect;
+Face merge_outlines(Mesh &slice, std::vector < std::vector < Slice_connect_data > > &connection_tree, std::vector < bool > &merged, int face_i){
+    merged[face_i] = true;
+    Face face = slice.faces[face_i];
+    Slice_connect_data parent_data;
 
-    for(int i = 0; i < to_connect.size() - 1; i++){
-        connect.push(std::make_pair(to_connect[i], to_connect[i + 1]));
+    for(Slice_connect_data i : connection_tree[face_i]){
+        if(!merged[i.face1]){
+            Face face_to_merge = merge_outlines(slice, connection_tree, merged, i.face1);
+
+            int merge_i = 0;
+            while (face.verts[merge_i] != i.v0 && face.verts[merge_i] != i.v1) merge_i++;
+            face.verts.insert(face.verts.begin() + merge_i + 1, face.verts[merge_i]);
+            face.verts.insert(face.verts.begin() + merge_i + 1, face_to_merge.verts.begin(), face_to_merge.verts.end());
+        }
+        else parent_data = i;
     }
 
-    std::unordered_map < int, int > verts_to_connect;
+    if(parent_data.v0 == -1) return face;
+
+    for(int i = 0; i < face.verts.size(); i++){
+        if(face.verts[i] == parent_data.v0) std::swap(parent_data.v0, parent_data.v1);
+        if(face.verts[i] == parent_data.v1){
+            face.verts.insert(face.verts.end(), face.verts.begin(), face.verts.begin() + i);
+            face.verts.erase(face.verts.begin(), face.verts.begin() + i);
+            break;
+        }
+    }
+    face.verts.push_back(face.verts[0]);
+
+    std::cout << face_i << ": ";
+    std::cout << "(";
+    for(int i: face.verts){
+        std::cout << i << ", ";
+    }
+    std::cout << ") (" << parent_data.v0 << ", " << parent_data.v1 << ")\n";
+
+    return face;
+}
+
+Face connect_group(Mesh &slice, std::vector < int > faces){
+    std::stack < std::pair < int, int > > connect;
+    std::vector < bool > connected(slice.faces.size());
+
+    for(int i = 0; i < faces.size() - 1; i++){
+        connect.push(std::make_pair(faces[i], faces[i + 1]));
+    }
+
+    std::map < std::pair < int, int >, bool > verts_to_connect;
+    std::vector < Slice_connect_data > connection_data;
 
     while(!connect.empty()){
         int from = connect.top().first;
         int to = connect.top().second;
         connect.pop();
+        if(connected[from] && connected[to]) continue;
 
         //std::cout << from << " -> " << to << '\n';
         std::pair < int, int > verts = find_connection(slice, from, to);
         std::vector < std::pair < double, int > > intersected;
-        for(int i : to_connect){
+        for(int i : faces){
             if(i != from && i != to){
                 double dist = face_intersection_dist(
                     slice,
@@ -206,23 +257,50 @@ void connect_group(Mesh &slice, std::vector < int > to_connect){
         }
 
         if(intersected.empty()){
-            verts_to_connect[std::min(verts.first, verts.second)] = std::max(verts.first, verts.second);
+            if(!verts_to_connect[verts]){
+                connection_data.push_back(Slice_connect_data(
+                        std::min(verts.first, verts.second),
+                        std::max(verts.first, verts.second),
+                        from,
+                        to
+                ));
+            }
+            verts_to_connect[verts] = true;
+            connected[from] = true;
+            connected[to] = true;
         }
         else{
             std::sort(intersected.begin(), intersected.end());
 
-            intersected.insert(intersected.begin(), std::make_pair(from, 0));
-            intersected.insert(intersected.end(), std::make_pair(to, 0));
+            intersected.insert(intersected.begin(), std::make_pair(0, from));
+            intersected.insert(intersected.end(), std::make_pair(0, to));
 
             for(int i = 0; i < intersected.size() - 1; i++){
                 connect.push(std::make_pair(intersected[i].second, intersected[i + 1].second));
             }
+
         }
     }
 
-    for(auto i : verts_to_connect){
-        connect_outlines(slice, i.first, i.second);
+
+    std::vector < std::vector < Slice_connect_data > > connection_tree(slice.faces.size(), std::vector < Slice_connect_data > ());
+    for(auto i : connection_data){
+        //connect_outlines(slice, i.v0, i.v1);
+        connection_tree[i.face0].push_back(Slice_connect_data(i.v0, i.v1, i.face0, i.face1));
+        connection_tree[i.face1].push_back(Slice_connect_data(i.v1, i.v0, i.face1, i.face0));
     }
+/*
+    std::cout << "\n--------" << faces[faces.size() - 1] << "--------\n";
+    for(int i = 0; i < connection_tree.size(); i++){
+       std::cout << i << ": ";
+       for(auto j : connection_tree[i]){
+           std::cout << j.face1 << "(" << j.v0 << ", " << j.v1 << ") ";
+       }
+       std::cout << '\n';
+    }
+*/
+    std::vector < bool > merged(slice.faces.size());
+    return merge_outlines(slice, connection_tree, merged, faces[faces.size() - 1]);
 }
 
 Mesh slice_mesh(Mesh &mesh, double h, dvec2 border_st, dvec2 border_en){
@@ -371,11 +449,14 @@ Mesh slice_mesh(Mesh &mesh, double h, dvec2 border_st, dvec2 border_en){
         }
     }
 
+    Mesh slice_ready_to_triangulate;
+    slice_ready_to_triangulate.vertices = slice.vertices;
+
     for(auto el : connection_groups){
         std::vector < int > to_connect = el.second;
         to_connect.push_back(el.first);
 
-        connect_group(slice, to_connect);
+        slice_ready_to_triangulate.add_face(connect_group(slice, to_connect));
     }
 /*
     std::cout << "\n-------------------\n";
@@ -405,5 +486,5 @@ Mesh slice_mesh(Mesh &mesh, double h, dvec2 border_st, dvec2 border_en){
         std::cout << '\n';
     }
 */
-    return slice;
+    return slice_ready_to_triangulate;
 }

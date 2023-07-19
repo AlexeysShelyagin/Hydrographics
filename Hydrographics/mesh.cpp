@@ -28,6 +28,17 @@ void Mesh::add_face(std::vector < int > vertices, dvec3 n) {
     faces.push_back(Face(vertices, n));
 }
 
+void Mesh::add_face(Face face) {
+    faces.push_back(face);
+}
+
+void Mesh::delete_face(int n){
+    faces[n].verts.clear();
+    face_to_delete.push_back(n);
+
+    // TODO: create func to delete empty faces
+}
+
 std::vector < dvec3 > Mesh::face_vertices(int face_i) {
     int v_n = faces[face_i].verts.size();
     std::vector < dvec3 > verts(v_n);

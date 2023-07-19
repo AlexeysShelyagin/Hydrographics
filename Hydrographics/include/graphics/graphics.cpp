@@ -5,7 +5,7 @@
 #include <iostream>
 #include <map>
 
-#define FONT_HEIGHT 8
+#define FONT_HEIGHT 14
 
 using namespace sf;
 
@@ -87,13 +87,12 @@ Color HSV(double H, double S, double V){
 }
 
 void sf_init_window(int w, int h, std::string title, double scale){
-    //font.loadFromFile("./Fonts/consolas.ttf");
-    // TODO: fix font import
+    font.loadFromFile("../Fonts/consolas.ttf");
 
     screen = window_surface(w, h);
     surf_top = window_surface(screen.w / 2, screen.h / 2, screen.w / 2, 0);
-    surf_front = window_surface(screen.w / 2, screen.h / 2,0, screen.h / 2);
-    surf_side = window_surface(screen.w / 2, screen.h / 2, screen.w / 2, screen.h / 2);
+    surf_front = window_surface(screen.w / 2, screen.h / 2, screen.w / 2, screen.h / 2);
+    surf_side = window_surface(screen.w / 2, screen.h / 2,0, screen.h / 2);
 
     surfaces["screen"] = &screen;
     surfaces["top"] = &surf_top;
@@ -192,15 +191,17 @@ void draw_circle(std::string surf_name, dvec2 pos){
     window -> draw(circle);
 }
 
-void draw_text(std::string surf_name, std::string txt, int x, int y){
+void draw_text(std::string surf_name, std::string txt, dvec2 pos){
     window_surface* surface = surfaces[surf_name];
 
     Text text;
     text.setFont(font);
     text.setCharacterSize(FONT_HEIGHT);
 
+    int half_w = surface -> w / 2, half_h = surface -> h / 2;
+
     text.setString(txt);
-    text.setPosition(Vector2f(x + surface -> x, y + surface -> y));
+    text.setPosition(Vector2f(pos.x + surface -> x + half_w, pos.y + surface -> y + half_h));
     window -> draw(text);
 }
 

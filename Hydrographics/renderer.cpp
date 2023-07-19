@@ -26,7 +26,7 @@ void render_clear(){
     sf_clear_window();
 }
 
-void draw_polygon(std::vector < dvec3 > poly, dvec3 color = dvec3(255, 255, 255)){
+void draw_face(std::vector < dvec3 > poly, dvec3 color = dvec3(255, 255, 255)){
     int v_n = poly.size();
     for(int j = 0; j < v_n; j++){
         draw_line("top",
@@ -47,21 +47,30 @@ void draw_polygon(std::vector < dvec3 > poly, dvec3 color = dvec3(255, 255, 255)
     }
 }
 
-void render_mesh(Mesh &mesh, dvec3 default_color){
-    /*
+void render_mesh(Mesh &mesh, dvec3 default_color, bool draw_indices, bool draw_face_number){
+
     for(int i = 0; i < mesh.vertices.size(); i++) {
-        draw_circle("top", pos_on_view("top", mesh.vertices[i]));
-        draw_circle("front", pos_on_view("front", mesh.vertices[i]));
-        draw_circle("side", pos_on_view("side", mesh.vertices[i]));
+        //draw_circle("top", pos_on_view("top", mesh.vertices[i]));
+        //draw_circle("front", pos_on_view("front", mesh.vertices[i]));
+        //draw_circle("side", pos_on_view("side", mesh.vertices[i]));
+
+        if(draw_indices) {
+            draw_text("top", std::to_string(i), pos_on_view("top", mesh.vertices[i]));
+            draw_text("front", std::to_string(i), pos_on_view("front", mesh.vertices[i]));
+            draw_text("side", std::to_string(i), pos_on_view("side", mesh.vertices[i]));
+        }
     }
-     */
 
     for(int i = 0; i < mesh.faces.size(); i++){
-        draw_polygon(mesh.face_vertices(i), default_color);
+        draw_face(mesh.face_vertices(i), default_color);
+
+        if(draw_face_number){
+            draw_text("top", std::to_string(i), pos_on_view("top", mesh.vertices[mesh.faces[i].verts[0]]));
+        }
     }
     for(auto s : mesh.selected){
         if(s.second) {
-            draw_polygon(mesh.face_vertices(s.first), dvec3(255, 100, 100));
+            draw_face(mesh.face_vertices(s.first), dvec3(255, 100, 100));
         }
     }
 }
